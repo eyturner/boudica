@@ -1,3 +1,7 @@
+mod grid;
+
 fn main() {
-    println!("Hello, world!");
+    let mut game_grid = grid::Grid::new();
+    game_grid.print_ascii();
+    println!("We've got this working: {:?}", game_grid);
 }
