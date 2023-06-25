@@ -1,3 +1,5 @@
+use super::hex::Hex;
+
 #[derive(Debug)]
 enum PieceType {
     QueenBee,
@@ -15,4 +17,5 @@ pub struct Piece {
     color: String,
     piece_type: PieceType,
     name: String,
+    hex: Hex,
 }
