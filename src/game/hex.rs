@@ -1,6 +1,18 @@
 #[derive(Debug)]
 pub struct Hex {
-    q: i32,
-    r: i32,
-    z: i32,
+    pub q: isize,
+    pub r: isize,
+    pub s: isize,
+    pub z: isize,
+}
+
+impl Hex {
+    pub fn new() -> Hex {
+        return Hex {
+            q: 0,
+            r: 0,
+            s: 0,
+            z: 0,
+        };
+    }
 }
