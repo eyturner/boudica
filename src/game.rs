@@ -1,129 +1,30 @@
-use crate::game::hex::Hex;
+use crate::game::hex::{Hex, HexEdge};
 use crate::game::piece::{Piece, PieceMove, PieceType};
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 
+use self::hex::get_edge_types;
 use self::piece::PieceColor;
 
 pub mod hex;
 pub mod piece;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum HexEdge {
-    N,
-    NE,
-    SE,
-    S,
-    SW,
-    NW,
-    T,
-    B,
-}
-
 pub fn get_starting_hand(color: PieceColor) -> Vec<Piece> {
-    let mut color_prefix = String::from("b");
-    if &color == &PieceColor::White {
-        color_prefix = String::from("w");
-    }
     return vec![
-        Piece {
-            color,
-            piece_type: PieceType::QueenBee,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "q",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Spider,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "s1",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Spider,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "s2",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Beetle,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "b1",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Beetle,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "b2",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Grasshopper,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "g1",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Grasshopper,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "g2",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Grasshopper,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "g3",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Ant,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "a1",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Ant,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "a2",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Ant,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "a3",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Mosquito,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "m",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Ladybug,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "l",
-        },
-        Piece {
-            color,
-            piece_type: PieceType::Pillbug,
-            hex: Hex::new(),
-            in_hand: true,
-            name: color_prefix.clone() + "p",
-        },
+        Piece::new(color, PieceType::QueenBee, "q"),
+        Piece::new(color, PieceType::Spider, "s1"),
+        Piece::new(color, PieceType::Spider, "s2"),
+        Piece::new(color, PieceType::Beetle, "b1"),
+        Piece::new(color, PieceType::Beetle, "b2"),
+        Piece::new(color, PieceType::Grasshopper, "g1"),
+        Piece::new(color, PieceType::Grasshopper, "g2"),
+        Piece::new(color, PieceType::Grasshopper, "g3"),
+        Piece::new(color, PieceType::Ant, "a1"),
+        Piece::new(color, PieceType::Ant, "a2"),
+        Piece::new(color, PieceType::Ant, "a3"),
+        Piece::new(color, PieceType::Mosquito, "m"),
+        Piece::new(color, PieceType::Ladybug, "l"),
+        Piece::new(color, PieceType::Pillbug, "p"),
     ];
 }
 
@@ -147,37 +48,59 @@ impl Game {
         todo!();
     }
 
-    pub fn make_move(&mut self, piece_move: PieceMove) {
-        if let Some(fp) = self
-            .grid
-            .node_weights_mut()
-            .find(|p| p.name == piece_move.piece.name)
-        {
-            // TODO: Update old edges
-            fp.hex = piece_move.hex;
-
-            // TODO: Update new edges
-        } else {
-            eprintln!("Unable to find specified piece in make_move");
-        }
+    pub fn get_moves(&self) -> Vec<PieceMove> {
+        todo!();
     }
 
-    pub fn add_to_grid(&mut self, mut piece_placement: PieceMove) -> NodeIndex {
+    /// Assumes piece_move is valid move
+    pub fn make_move(&mut self, piece_move: PieceMove) {
+        // get piece from node:
+        let piece = self
+            .grid
+            .node_weight(piece_move.piece_node)
+            .expect("Unable to find Piece")
+            .clone();
+        self.grid.remove_node(piece_move.piece_node);
+        self.add_to_grid(piece, piece_move.hex);
+    }
+
+    pub fn add_to_grid(&mut self, mut piece: Piece, hex: Hex) -> NodeIndex {
         // Remove piece from both hands:
-        self.p1_hand.retain(|p| *p != piece_placement.piece);
-        self.p2_hand.retain(|p| *p != piece_placement.piece);
+        self.p1_hand.retain(|p| *p != piece);
+        self.p2_hand.retain(|p| *p != piece);
 
         // Update new_piece
-        piece_placement.piece.in_hand = false;
-        piece_placement.piece.hex = piece_placement.hex;
+        piece.in_hand = false;
+        piece.hex = hex;
 
-        // TODO: Update board to reflect piece added
-        let new_piece = self.grid.add_node(piece_placement.piece);
+        let new_piece = self.grid.add_node(piece);
 
-        // TODO: Update Edges for new_piece
-        //
+        self.update_piece_edges(new_piece);
 
         return new_piece;
+    }
+
+    pub fn update_piece_edges(&mut self, piece: NodeIndex) {
+        for hex_edge in get_edge_types() {
+            let piece_node = self
+                .grid
+                .node_indices()
+                .find(|&p| self.grid[p].hex == self.grid[piece].hex)
+                .expect("Error finding piece_node in game_grid");
+
+            let neighbor_hex = self.grid[piece].hex.get_neighbor(hex_edge);
+
+            if let Some(found_neighbor_p) = self
+                .grid
+                .node_indices()
+                .find(|&p| self.grid[p].hex == neighbor_hex)
+            {
+                // Add connection both ways
+                self.grid.add_edge(piece_node, found_neighbor_p, hex_edge);
+                self.grid
+                    .add_edge(found_neighbor_p, piece_node, hex_edge.get_opposite());
+            }
+        }
     }
 }
 
@@ -190,8 +113,4 @@ pub fn import_from_ign(ign: &str) -> Game {
     // you will be reading up --> down and then left --> right
 
     todo!();
-    // let rows = ign.lines();
-    // let mut g = Game::new();
-    //
-    // return Game::new();
 }

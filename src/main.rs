@@ -16,43 +16,31 @@ fn main() {
     //     turn: 0,
     //     moves: Vec::new(),
     // };
-    let first_move = PieceMove {
-        piece: Piece {
-            name: String::from("bq"),
-            color: PieceColor::Black,
-            hex: Hex {
-                q: 0,
-                r: 0,
-                s: 0,
-                z: 2,
-            },
-            piece_type: PieceType::QueenBee,
-            in_hand: true,
-        },
-        hex: Hex {
-            q: 0,
-            r: 0,
-            s: 0,
-            z: 0,
-        },
-    };
-    game.add_to_grid(first_move);
 
-    let test_piece = Piece {
-        name: String::from("bq"),
-        color: PieceColor::Black,
-        hex: Hex {
+    let first_piece = Piece::new(PieceColor::Black, PieceType::QueenBee, "q");
+    let second_piece = Piece::new(PieceColor::White, PieceType::QueenBee, "q");
+
+    let fmi = game.add_to_grid(
+        first_piece,
+        Hex {
             q: 0,
             r: 0,
             s: 0,
             z: 0,
         },
-        piece_type: PieceType::QueenBee,
-        in_hand: false,
-    };
+    );
+    let smi = game.add_to_grid(
+        second_piece,
+        Hex {
+            q: 0,
+            r: -1,
+            s: 1,
+            z: 0,
+        },
+    );
 
     let test_move = PieceMove {
-        piece: test_piece,
+        piece_node: smi,
         hex: Hex {
             q: 1,
             r: 1,
@@ -62,12 +50,7 @@ fn main() {
     };
 
     game.make_move(test_move);
-
-    for piece in game.p1_hand {
-        println!("{:?}", piece);
-    }
-
-    println!("\n\n{:?}", game.grid);
+    println!("{:?}", game.grid);
 
     /*
      * Command line args to determine if the players are users or cpus
