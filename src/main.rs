@@ -19,6 +19,7 @@ fn main() {
 
     let first_piece = Piece::new(PieceColor::Black, PieceType::QueenBee, "q");
     let second_piece = Piece::new(PieceColor::White, PieceType::QueenBee, "q");
+    let third_piece = Piece::new(PieceColor::White, PieceType::Ant, "a1");
 
     let fmi = game.add_to_grid(
         first_piece,
@@ -39,18 +40,24 @@ fn main() {
         },
     );
 
-    let test_move = PieceMove {
-        piece_node: smi,
-        hex: Hex {
-            q: 1,
-            r: 1,
+    let tmi = game.add_to_grid(
+        third_piece.clone(),
+        Hex {
+            q: -1,
+            r: 0,
             s: 1,
-            z: 1,
+            z: 0,
         },
-    };
+    );
 
-    game.make_move(test_move);
-    println!("{:?}", game.grid);
+    let found_third_piece = game
+        .grid
+        .node_weight(tmi)
+        .expect("Unable to find second piece");
+
+    for m in game.get_all_moves() {
+        println!("\n{:?}", m);
+    }
 
     /*
      * Command line args to determine if the players are users or cpus

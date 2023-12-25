@@ -48,8 +48,16 @@ impl Game {
         todo!();
     }
 
-    pub fn get_moves(&self) -> Vec<PieceMove> {
-        todo!();
+    pub fn get_all_moves(&self) -> Vec<PieceMove> {
+        let mut valid_moves: Vec<PieceMove> = Vec::new();
+        for piece in self.grid.node_weights() {
+            if piece.can_move(&self.grid) {
+                for pm in piece.get_moves(&self) {
+                    valid_moves.push(pm);
+                }
+            }
+        }
+        return valid_moves;
     }
 
     /// Assumes piece_move is valid move
@@ -62,6 +70,11 @@ impl Game {
             .clone();
         self.grid.remove_node(piece_move.piece_node);
         self.add_to_grid(piece, piece_move.hex);
+    }
+
+    pub fn umake_move(&mut self, piece_move: PieceMove) {
+        // piece_move should contain the previous location of the piece
+        todo!();
     }
 
     pub fn add_to_grid(&mut self, mut piece: Piece, hex: Hex) -> NodeIndex {

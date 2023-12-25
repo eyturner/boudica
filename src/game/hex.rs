@@ -93,6 +93,17 @@ impl Hex {
         }
     }
 
+    pub fn get_slide_neighbors(&self) -> Vec<Hex> {
+        let mut n = Vec::new();
+        n.push(self.get_neighbor(HexEdge::N));
+        n.push(self.get_neighbor(HexEdge::NE));
+        n.push(self.get_neighbor(HexEdge::SE));
+        n.push(self.get_neighbor(HexEdge::S));
+        n.push(self.get_neighbor(HexEdge::SW));
+        n.push(self.get_neighbor(HexEdge::NW));
+        return n;
+    }
+
     pub fn get_neighbors(&self) -> Vec<Hex> {
         let mut n = Vec::new();
         n.push(self.get_neighbor(HexEdge::N));
@@ -130,6 +141,18 @@ impl HexEdge {
             Self::NW => return Self::SE,
             Self::T => return Self::B,
             Self::B => return Self::T,
+        }
+    }
+
+    pub fn get_gate_edges(self) -> [Self; 2] {
+        match self {
+            Self::N => return [Self::NW, Self::NE],
+            Self::NE => return [Self::N, Self::SE],
+            Self::SE => return [Self::NE, Self::S],
+            Self::S => return [Self::SE, Self::SW],
+            Self::SW => return [Self::S, Self::NW],
+            Self::NW => return [Self::SW, Self::N],
+            _ => return [Self::N, Self::S], // Impossible
         }
     }
 }
