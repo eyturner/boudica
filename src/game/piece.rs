@@ -1,5 +1,5 @@
 use super::hex::{get_slide_edge_types, Hex};
-use crate::game::{Game, HexEdge};
+use crate::game::{hex_is_connected, Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
@@ -117,7 +117,9 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
     if queen.can_move(&game.grid) {
         let queen_neighbor_edges = get_slide_edge_types();
         for e in queen_neighbor_edges {
-            if can_slide(queen.hex, e, game) {
+            if can_slide(queen.hex, e, game)
+                && hex_is_connected(queen.hex.get_neighbor(e), game, &queen.id)
+            {
                 valid_moves.push(PieceMove {
                     piece_node: queen_node,
                     hex: queen.hex.get_neighbor(e),
@@ -129,18 +131,6 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
 }
 
 pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
-    // Returns true if hex is attached to some piece in game.grid other than itself
-    fn hex_is_connected(hex: Hex, game: &Game, ant_id: &str) -> bool {
-        if let Some(_neighbor) = game
-            .grid
-            .node_weights()
-            .find(|&piece| piece.hex.get_neighbors().contains(&hex) && piece.id != ant_id)
-        {
-            return true;
-        }
-        return false;
-    }
-
     let mut valid_moves: Vec<PieceMove> = Vec::new();
     // Confirm Ant is not pinned:
     if ant.can_move(&game.grid) {

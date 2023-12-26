@@ -117,6 +117,18 @@ impl Game {
     }
 }
 
+// Returns true if hex is attached to some piece in game.grid other than itself
+fn hex_is_connected(hex: Hex, game: &Game, piece_id: &str) -> bool {
+    if let Some(_neighbor) = game
+        .grid
+        .node_weights()
+        .find(|&piece| piece.hex.get_neighbors().contains(&hex) && piece.id != piece_id)
+    {
+        return true;
+    }
+    return false;
+}
+
 // IGN: Inline Grid Notation
 // Example IGN: wa1 ba1 1_bb1 |1| wb1 wq ba2 bq ...
 
