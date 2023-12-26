@@ -106,6 +106,9 @@ impl Piece {
                 PieceType::Beetle => {
                     valid_moves.extend(get_beetle_moves(self, curr_piece_node, game));
                 }
+                PieceType::Grasshopper => {
+                    valid_moves.extend(get_grasshopper_moves(self, curr_piece_node, game));
+                }
                 _ => {
                     return todo!();
                 }
@@ -196,6 +199,39 @@ pub fn get_beetle_moves(beetle: &Piece, beetle_node: NodeIndex, game: &Game) -> 
                         z: bottom_piece.hex.z + 1,
                     },
                 })
+            }
+        }
+    }
+    return valid_moves;
+}
+
+pub fn get_grasshopper_moves(
+    mosquito: &Piece,
+    mosquito_node: NodeIndex,
+    game: &Game,
+) -> Vec<PieceMove> {
+    let mut valid_moves: Vec<PieceMove> = Vec::new();
+    if mosquito.can_move(&game.grid) {
+        let jump_dirs = get_edge_types();
+        for dir in jump_dirs {
+            println!("On {:?}", dir);
+            let mut jumps: usize = 0;
+            let mut jump_hex = mosquito.hex.clone();
+            while let Some(curr_piece) = game
+                .grid
+                .node_weights()
+                .find(|&piece| piece.hex == jump_hex.get_neighbor(dir))
+            {
+                jumps += 1;
+                jump_hex = curr_piece.hex.get_neighbor(dir);
+            }
+
+            // Add jump now (if we've done at least 1 move)
+            if jumps > 0 {
+                valid_moves.push(PieceMove {
+                    piece_node: mosquito_node,
+                    hex: jump_hex,
+                });
             }
         }
     }
