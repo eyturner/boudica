@@ -2,7 +2,6 @@ use super::hex::{get_slide_edge_types, Hex};
 use crate::game::{Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
-use petgraph::graphmap::Neighbors;
 use petgraph::Graph;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
@@ -130,17 +129,15 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
 }
 
 pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
-    // Returns true if hex is attached to some piece in game.grid
-    fn hex_is_connected(hex: Hex, game: &Game) -> bool {
+    // Returns true if hex is attached to some piece in game.grid other than itself
+    fn hex_is_connected(hex: Hex, game: &Game, ant_id: &str) -> bool {
         if let Some(_neighbor) = game
             .grid
             .node_weights()
-            .find(|&piece| piece.hex.get_neighbors().contains(&hex))
+            .find(|&piece| piece.hex.get_neighbors().contains(&hex) && piece.id != ant_id)
         {
-            println!("{:?} is connected", hex);
             return true;
         }
-        println!("{:?} is not connected", hex);
         return false;
     }
 
@@ -150,13 +147,16 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
         // BFS using a queue to determine all the hexes the ant can move to:
         let mut hexes_to_check: Vec<Hex> = ant.hex.get_slide_neighbors();
         hexes_to_check.retain(|&n| {
-            game.grid.node_weights().find(|p| p.hex == n).is_none() && hex_is_connected(n, game)
+            game.grid.node_weights().find(|p| p.hex == n).is_none()
+                && hex_is_connected(n, game, &ant.id)
         });
 
         while !hexes_to_check.is_empty() {
             // If game doesn't have piece at h, add to valid_moves,
             if let Some(h) = hexes_to_check.pop() {
-                if game.grid.node_weights().find(|&p| p.hex == h).is_none() {
+                if game.grid.node_weights().find(|&p| p.hex == h).is_none()
+                    && valid_moves.iter().find(|&m| m.hex == h).is_none()
+                {
                     valid_moves.push(PieceMove {
                         piece_node: ant_node,
                         hex: h,
@@ -166,7 +166,7 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
                     h_neighbors.retain(|&n| {
                         !game.grid.node_weights().find(|p| p.hex == n).is_some()
                             && !valid_moves.iter().find(|m| m.hex == n).is_some()
-                            && hex_is_connected(n, game)
+                            && hex_is_connected(n, game, &ant.id)
                     });
                     hexes_to_check.extend(h_neighbors);
                 }
