@@ -1,4 +1,4 @@
-use super::hex::Hex;
+use super::hex::{get_slide_edge_types, Hex};
 use crate::game::{Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
@@ -116,59 +116,14 @@ impl Piece {
 pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
     if queen.can_move(&game.grid) {
-        // Check six surroundign squares for QueenBee
-        // N:
-        let n = queen.hex.get_neighbor(HexEdge::N);
-        if can_slide(queen.hex, HexEdge::N, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: n,
-            })
-        }
-
-        // NE:
-        let ne = queen.hex.get_neighbor(HexEdge::NE);
-        if can_slide(queen.hex, HexEdge::NE, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: ne,
-            })
-        }
-
-        // SE:
-        let se = queen.hex.get_neighbor(HexEdge::SE);
-        if can_slide(queen.hex, HexEdge::SE, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: se,
-            })
-        }
-
-        // S:
-        let s = queen.hex.get_neighbor(HexEdge::S);
-        if can_slide(queen.hex, HexEdge::S, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: s,
-            })
-        }
-
-        // SW:
-        let sw = queen.hex.get_neighbor(HexEdge::SW);
-        if can_slide(queen.hex, HexEdge::SW, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: sw,
-            })
-        }
-
-        // NW:
-        let nw = queen.hex.get_neighbor(HexEdge::NW);
-        if can_slide(queen.hex, HexEdge::NW, game) {
-            valid_moves.push(PieceMove {
-                piece_node: queen_node,
-                hex: nw,
-            })
+        let queen_neighbor_edges = get_slide_edge_types();
+        for e in queen_neighbor_edges {
+            if can_slide(queen.hex, e, game) {
+                valid_moves.push(PieceMove {
+                    piece_node: queen_node,
+                    hex: queen.hex.get_neighbor(e),
+                })
+            }
         }
     }
     return valid_moves;
@@ -218,7 +173,6 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
             }
         }
     }
-
     return valid_moves;
 }
 

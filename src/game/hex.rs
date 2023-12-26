@@ -169,3 +169,14 @@ pub fn get_edge_types() -> [HexEdge; 8] {
         HexEdge::B,
     ];
 }
+
+pub fn get_slide_edge_types() -> [HexEdge; 6] {
+    return [
+        HexEdge::N,
+        HexEdge::NE,
+        HexEdge::SE,
+        HexEdge::S,
+        HexEdge::SW,
+        HexEdge::NW,
+    ];
+}
