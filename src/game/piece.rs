@@ -1,4 +1,4 @@
-use super::hex::{get_slide_edge_types, Hex};
+use super::hex::{get_edge_types, Hex};
 use crate::game::{hex_is_connected, Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
@@ -103,6 +103,9 @@ impl Piece {
                 PieceType::Ant => {
                     valid_moves.extend(get_ant_moves(self, curr_piece_node, game));
                 }
+                PieceType::Beetle => {
+                    valid_moves.extend(get_beetle_moves(self, curr_piece_node, game));
+                }
                 _ => {
                     return todo!();
                 }
@@ -115,7 +118,7 @@ impl Piece {
 pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
     if queen.can_move(&game.grid) {
-        let queen_neighbor_edges = get_slide_edge_types();
+        let queen_neighbor_edges = get_edge_types();
         for e in queen_neighbor_edges {
             if can_slide(queen.hex, e, game)
                 && hex_is_connected(queen.hex.get_neighbor(e), game, &queen.id)
@@ -135,7 +138,7 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
     // Confirm Ant is not pinned:
     if ant.can_move(&game.grid) {
         // BFS using a queue to determine all the hexes the ant can move to:
-        let mut hexes_to_check: Vec<Hex> = ant.hex.get_slide_neighbors();
+        let mut hexes_to_check: Vec<Hex> = ant.hex.get_neighbors();
         hexes_to_check.retain(|&n| {
             game.grid.node_weights().find(|p| p.hex == n).is_none()
                 && hex_is_connected(n, game, &ant.id)
@@ -160,6 +163,39 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
                     });
                     hexes_to_check.extend(h_neighbors);
                 }
+            }
+        }
+    }
+    return valid_moves;
+}
+
+pub fn get_beetle_moves(beetle: &Piece, beetle_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
+    let mut valid_moves: Vec<PieceMove> = Vec::new();
+    if beetle.can_move(&game.grid) {
+        let beetle_neighbor_edges = get_edge_types();
+        for e in beetle_neighbor_edges {
+            if can_slide(beetle.hex, e, game)
+                && hex_is_connected(beetle.hex.get_neighbor(e), game, &beetle.id)
+            {
+                valid_moves.push(PieceMove {
+                    piece_node: beetle_node,
+                    hex: beetle.hex.get_neighbor(e),
+                })
+            } else if let Some(bottom_piece) = game
+                .grid
+                .node_weights()
+                .find(|&piece| piece.hex == beetle.hex.get_neighbor(e))
+            {
+                // Add move to place beetle on top!
+                valid_moves.push(PieceMove {
+                    piece_node: beetle_node,
+                    hex: Hex {
+                        q: bottom_piece.hex.q,
+                        r: bottom_piece.hex.r,
+                        s: bottom_piece.hex.s,
+                        z: bottom_piece.hex.z + 1,
+                    },
+                })
             }
         }
     }

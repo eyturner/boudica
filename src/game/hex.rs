@@ -93,17 +93,6 @@ impl Hex {
         }
     }
 
-    pub fn get_slide_neighbors(&self) -> Vec<Hex> {
-        let mut n = Vec::new();
-        n.push(self.get_neighbor(HexEdge::N));
-        n.push(self.get_neighbor(HexEdge::NE));
-        n.push(self.get_neighbor(HexEdge::SE));
-        n.push(self.get_neighbor(HexEdge::S));
-        n.push(self.get_neighbor(HexEdge::SW));
-        n.push(self.get_neighbor(HexEdge::NW));
-        return n;
-    }
-
     pub fn get_neighbors(&self) -> Vec<Hex> {
         let mut n = Vec::new();
         n.push(self.get_neighbor(HexEdge::N));
@@ -112,8 +101,6 @@ impl Hex {
         n.push(self.get_neighbor(HexEdge::S));
         n.push(self.get_neighbor(HexEdge::SW));
         n.push(self.get_neighbor(HexEdge::NW));
-        n.push(self.get_neighbor(HexEdge::T));
-        n.push(self.get_neighbor(HexEdge::B));
         return n;
     }
 }
@@ -152,25 +139,12 @@ impl HexEdge {
             Self::S => return [Self::SE, Self::SW],
             Self::SW => return [Self::S, Self::NW],
             Self::NW => return [Self::SW, Self::N],
-            _ => return [Self::N, Self::S], // Impossible
+            _ => return [Self::B, Self::T], // Impossible
         }
     }
 }
 
-pub fn get_edge_types() -> [HexEdge; 8] {
-    return [
-        HexEdge::N,
-        HexEdge::NE,
-        HexEdge::SE,
-        HexEdge::S,
-        HexEdge::SW,
-        HexEdge::NW,
-        HexEdge::T,
-        HexEdge::B,
-    ];
-}
-
-pub fn get_slide_edge_types() -> [HexEdge; 6] {
+pub fn get_edge_types() -> [HexEdge; 6] {
     return [
         HexEdge::N,
         HexEdge::NE,
