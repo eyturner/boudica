@@ -175,8 +175,13 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
 }
 
 pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
+    // Returns true if hex is attached to some piece in game.grid
     fn hex_is_connected(hex: Hex, game: &Game) -> bool {
-        if let Some(_neighbor) = game.grid.node_weights().find(|&piece| piece.hex == hex) {
+        if let Some(_neighbor) = game
+            .grid
+            .node_weights()
+            .find(|&piece| piece.hex.get_neighbors().contains(&hex))
+        {
             println!("{:?} is connected", hex);
             return true;
         }
