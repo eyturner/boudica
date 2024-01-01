@@ -115,10 +115,50 @@ impl Game {
             }
         }
     }
+
+    pub fn hex_connects(&self, hex: Hex) -> bool {
+        if let Some(_neighbor) = self
+            .grid
+            .node_weights()
+            .find(|&piece| piece.hex.get_neighbors().contains(&hex))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn slide_distance(&self, start: Hex, end: Hex) -> usize {
+        println!("Looking for dist between {:?} and {:?}", start, end);
+        // Let's do some BFS, baby!
+        let mut total_distance: usize = 1;
+        let mut hexes_to_check: Vec<Hex> = start.get_neighbors();
+
+        // Only keep hexes that dont contain pieces but are still connected to the grid
+        hexes_to_check.retain(|h| {
+            self.hex_connects(*h) && self.grid.node_weights().find(|&p| p.hex == *h).is_none()
+        });
+
+        while !hexes_to_check.is_empty() {
+            let mut next_hexes: Vec<Hex> = Vec::new();
+            while let Some(curr_hex) = hexes_to_check.pop() {
+                if curr_hex == end {
+                    return total_distance;
+                }
+                next_hexes.extend(curr_hex.get_neighbors())
+            }
+
+            // No more hexes in hexes_to_check -> now go through next_hexes and add 1 to
+            // distance
+            hexes_to_check = next_hexes;
+            total_distance += 1;
+        }
+        // This means that there is no path between start and end, which should be impossible.
+        unreachable!()
+    }
 }
 
 // Returns true if hex is attached to some piece in game.grid other than itself
-fn hex_is_connected(hex: Hex, game: &Game, piece_id: &str) -> bool {
+fn piece_is_connected(hex: Hex, game: &Game, piece_id: &str) -> bool {
     if let Some(_neighbor) = game
         .grid
         .node_weights()

@@ -1,5 +1,5 @@
 use super::hex::{get_edge_types, Hex};
-use crate::game::{hex_is_connected, Game, HexEdge};
+use crate::game::{piece_is_connected, Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
@@ -83,14 +83,6 @@ impl Piece {
 
     pub fn get_moves(&self, game: &Game) -> Vec<PieceMove> {
         let mut valid_moves: Vec<PieceMove> = Vec::new();
-        // println!(
-        //     "{:?}, {:?}",
-        //     game.grid
-        //         .node_indices()
-        //         .find(|&n| game.grid[n].id == self.id)
-        //         .expect("Unable to find :("),
-        //     self
-        // );
         if let Some(curr_piece_node) = game
             .grid
             .node_indices()
@@ -109,6 +101,9 @@ impl Piece {
                 PieceType::Grasshopper => {
                     valid_moves.extend(get_grasshopper_moves(self, curr_piece_node, game));
                 }
+                PieceType::Spider => {
+                    valid_moves.extend(get_spider_moves(self, curr_piece_node, game));
+                }
                 _ => {
                     return todo!();
                 }
@@ -124,7 +119,7 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
         let queen_neighbor_edges = get_edge_types();
         for e in queen_neighbor_edges {
             if can_slide(queen.hex, e, game)
-                && hex_is_connected(queen.hex.get_neighbor(e), game, &queen.id)
+                && piece_is_connected(queen.hex.get_neighbor(e), game, &queen.id)
             {
                 valid_moves.push(PieceMove {
                     piece_node: queen_node,
@@ -144,7 +139,7 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
         let mut hexes_to_check: Vec<Hex> = ant.hex.get_neighbors();
         hexes_to_check.retain(|&n| {
             game.grid.node_weights().find(|p| p.hex == n).is_none()
-                && hex_is_connected(n, game, &ant.id)
+                && piece_is_connected(n, game, &ant.id)
         });
 
         while !hexes_to_check.is_empty() {
@@ -162,7 +157,7 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
                     h_neighbors.retain(|&n| {
                         !game.grid.node_weights().find(|p| p.hex == n).is_some()
                             && !valid_moves.iter().find(|m| m.hex == n).is_some()
-                            && hex_is_connected(n, game, &ant.id)
+                            && piece_is_connected(n, game, &ant.id)
                     });
                     hexes_to_check.extend(h_neighbors);
                 }
@@ -178,7 +173,7 @@ pub fn get_beetle_moves(beetle: &Piece, beetle_node: NodeIndex, game: &Game) -> 
         let beetle_neighbor_edges = get_edge_types();
         for e in beetle_neighbor_edges {
             if can_slide(beetle.hex, e, game)
-                && hex_is_connected(beetle.hex.get_neighbor(e), game, &beetle.id)
+                && piece_is_connected(beetle.hex.get_neighbor(e), game, &beetle.id)
             {
                 valid_moves.push(PieceMove {
                     piece_node: beetle_node,
@@ -206,17 +201,17 @@ pub fn get_beetle_moves(beetle: &Piece, beetle_node: NodeIndex, game: &Game) -> 
 }
 
 pub fn get_grasshopper_moves(
-    mosquito: &Piece,
-    mosquito_node: NodeIndex,
+    grasshopper: &Piece,
+    grasshopper_node: NodeIndex,
     game: &Game,
 ) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
-    if mosquito.can_move(&game.grid) {
+    if grasshopper.can_move(&game.grid) {
         let jump_dirs = get_edge_types();
         for dir in jump_dirs {
             println!("On {:?}", dir);
             let mut jumps: usize = 0;
-            let mut jump_hex = mosquito.hex.clone();
+            let mut jump_hex = grasshopper.hex.clone();
             while let Some(curr_piece) = game
                 .grid
                 .node_weights()
@@ -229,9 +224,56 @@ pub fn get_grasshopper_moves(
             // Add jump now (if we've done at least 1 move)
             if jumps > 0 {
                 valid_moves.push(PieceMove {
-                    piece_node: mosquito_node,
+                    piece_node: grasshopper_node,
                     hex: jump_hex,
                 });
+            }
+        }
+    }
+    return valid_moves;
+}
+
+pub fn get_spider_moves(spider: &Piece, spider_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
+    let spider_move_distance = 3;
+    let mut valid_moves: Vec<PieceMove> = Vec::new();
+    if spider.can_move(&game.grid) {
+        // BFS using a queue to determine all the hexes the spider can move to:
+        let mut hexes_to_check: Vec<Hex> = spider.hex.get_neighbors();
+        let mut checked_hexes: Vec<Hex> = Vec::new();
+        hexes_to_check.retain(|&n| {
+            game.grid.node_weights().find(|p| p.hex == n).is_none() // No piece at n
+                && piece_is_connected(n, game, &spider.id)
+        });
+
+        while !hexes_to_check.is_empty() {
+            // If game doesn't have piece at h, add to valid_moves,
+            if let Some(h) = hexes_to_check.pop() {
+                if game.grid.node_weights().find(|&p| p.hex == h).is_none() // No piece at h
+                // Haven't checked this
+                // hex yet
+                    && checked_hexes.iter().find(|&prev_h| prev_h == &h).is_none()
+                {
+                    if game.slide_distance(spider.hex, h) == spider_move_distance {
+                        valid_moves.push(PieceMove {
+                            piece_node: spider_node,
+                            hex: h,
+                        });
+                    } else {
+                        // Check all neighbors for h as well.
+                        let mut h_neighbors = h.get_neighbors();
+                        h_neighbors.retain(|&n| {
+                            game.grid.node_weights().find(|p| p.hex == n).is_none() // n is open
+                                && valid_moves.iter().find(|m| m.hex == n).is_none()
+                                && checked_hexes.iter().find(|&prev_h| prev_h == &n).is_none() // haven't
+                                                                                                // checked n yet
+                                && piece_is_connected(n, game, &spider.id) // n is connected to some
+                                                                           // other piece in the grid
+                        });
+                        hexes_to_check.extend(h_neighbors);
+                    }
+                }
+                // Add hex to checked hexes so we don't check it again
+                checked_hexes.push(h);
             }
         }
     }

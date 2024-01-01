@@ -19,7 +19,7 @@ fn main() {
 
     let first_piece = Piece::new(PieceColor::Black, PieceType::QueenBee, "q");
     let second_piece = Piece::new(PieceColor::White, PieceType::QueenBee, "q");
-    let third_piece = Piece::new(PieceColor::White, PieceType::Grasshopper, "g1");
+    let third_piece = Piece::new(PieceColor::White, PieceType::Spider, "s1");
 
     let fmi = game.add_to_grid(
         first_piece,
@@ -53,7 +53,7 @@ fn main() {
     let found_third_piece = game
         .grid
         .node_weight(tmi)
-        .expect("Unable to find second piece");
+        .expect("Unable to find third piece");
 
     for m in game.get_all_moves() {
         println!("\n{:?}", m);
