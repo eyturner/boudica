@@ -19,7 +19,7 @@ fn main() {
 
     let first_piece = Piece::new(PieceColor::Black, PieceType::QueenBee, "q");
     let second_piece = Piece::new(PieceColor::White, PieceType::QueenBee, "q");
-    let third_piece = Piece::new(PieceColor::White, PieceType::Pillbug, "p");
+    let third_piece = Piece::new(PieceColor::White, PieceType::Mosquito, "m");
 
     let fmi = game.add_to_grid(
         first_piece,

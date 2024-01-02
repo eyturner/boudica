@@ -22,7 +22,7 @@ pub enum PieceType {
     Mosquito,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct PieceMove {
     pub piece_node: NodeIndex,
     pub hex: Hex,
@@ -116,8 +116,8 @@ impl Piece {
                 PieceType::Pillbug => {
                     valid_moves.extend(get_pillbug_moves(self, curr_piece_node, game));
                 }
-                _ => {
-                    return todo!();
+                PieceType::Mosquito => {
+                    valid_moves.extend(get_mosquito_moves(self, curr_piece_node, game));
                 }
             }
         }
@@ -377,6 +377,110 @@ pub fn get_pillbug_moves(pillbug: &Piece, pillbug_node: NodeIndex, game: &Game) 
         }
     }
 
+    return valid_moves;
+}
+
+pub fn get_mosquito_moves(
+    mosquito: &Piece,
+    mosquito_node: NodeIndex,
+    game: &Game,
+) -> Vec<PieceMove> {
+    let mut valid_moves: Vec<PieceMove> = Vec::new();
+    let neighbor_hexes = mosquito.hex.get_neighbors();
+
+    for hex in neighbor_hexes {
+        if let Some(neighbor_piece) = game.grid.node_weights().find(|&p| p.hex == hex) {
+            match neighbor_piece.piece_type {
+                PieceType::QueenBee => {
+                    let possible_moves = get_queen_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Ant => {
+                    let possible_moves = get_ant_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Beetle => {
+                    let possible_moves = get_beetle_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Grasshopper => {
+                    let possible_moves = get_grasshopper_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Spider => {
+                    let possible_moves = get_spider_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Ladybug => {
+                    let possible_moves = get_ladybug_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Pillbug => {
+                    let possible_moves = get_pillbug_moves(mosquito, mosquito_node, game);
+                    for m in possible_moves {
+                        if valid_moves
+                            .iter()
+                            .find(|&found_move| found_move == &m)
+                            .is_none()
+                        {
+                            valid_moves.push(m);
+                        }
+                    }
+                }
+                PieceType::Mosquito => {
+                    valid_moves.extend([]);
+                }
+            }
+        }
+    }
     return valid_moves;
 }
 
