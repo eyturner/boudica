@@ -33,6 +33,7 @@ pub struct Game {
     pub grid: Graph<Piece, HexEdge, petgraph::Undirected>,
     pub p1_hand: Vec<Piece>,
     pub p2_hand: Vec<Piece>,
+    pub move_list: Vec<PieceMove>,
 }
 
 impl Game {
@@ -41,6 +42,7 @@ impl Game {
             grid: Graph::<Piece, HexEdge, petgraph::Undirected>::new_undirected(),
             p1_hand: get_starting_hand(PieceColor::Black),
             p2_hand: get_starting_hand(PieceColor::White),
+            move_list: Vec::new(),
         };
     }
 
@@ -51,7 +53,7 @@ impl Game {
     pub fn get_all_moves(&self) -> Vec<PieceMove> {
         let mut valid_moves: Vec<PieceMove> = Vec::new();
         for piece in self.grid.node_weights() {
-            if piece.can_move(&self.grid) {
+            if piece.can_move(self) {
                 for pm in piece.get_moves(&self) {
                     valid_moves.push(pm);
                 }
@@ -70,6 +72,7 @@ impl Game {
             .clone();
         self.grid.remove_node(piece_move.piece_node);
         self.add_to_grid(piece, piece_move.hex);
+        self.move_list.push(piece_move);
     }
 
     pub fn umake_move(&mut self, piece_move: PieceMove) {
@@ -154,6 +157,11 @@ impl Game {
         }
         // This means that there is no path between start and end, which should be impossible.
         unreachable!()
+    }
+
+    pub fn grid_distance(&self, start: Hex, end: Hex) -> usize {
+        // Returns distance along grid
+        return (start.q.abs_diff(end.q) + start.r.abs_diff(end.r) + start.s.abs_diff(end.s)) / 2;
     }
 }
 

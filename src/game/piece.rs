@@ -1,5 +1,5 @@
 use super::hex::{get_edge_types, Hex};
-use crate::game::{piece_is_connected, Game, HexEdge};
+use crate::game::{hex, piece_is_connected, Game, HexEdge};
 use petgraph::algo::dijkstra;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
@@ -16,10 +16,10 @@ pub enum PieceType {
     Ant,
     Beetle,
     Grasshopper,
-    Ladybug,
     Spider,
-    Mosquito,
+    Ladybug,
     Pillbug,
+    Mosquito,
 }
 
 #[derive(Debug)]
@@ -59,11 +59,15 @@ impl Piece {
         };
     }
 
-    pub fn can_move(&self, grid: &Graph<Piece, HexEdge, petgraph::Undirected>) -> bool {
+    pub fn can_move(&self, game: &Game) -> bool {
         // Dijkstra's algo to check if graph is fully connected
-        if let Some(piece_node) = grid.node_indices().find(|&n| grid[n].id == self.id) {
+        if let Some(piece_node) = game
+            .grid
+            .node_indices()
+            .find(|&n| game.grid[n].id == self.id)
+        {
             // Remove the node, and compare number of nodes to number of paths
-            let mut grid_clone = grid.clone();
+            let mut grid_clone = game.grid.clone();
             if let Some(_) = grid_clone.remove_node(piece_node) {
                 let paths = dijkstra(
                     &grid_clone,
@@ -78,6 +82,8 @@ impl Piece {
                 // grid_clone is dropped here
             }
         }
+
+        // TODO: Check for previous PillBug move
         return false;
     }
 
@@ -104,6 +110,9 @@ impl Piece {
                 PieceType::Spider => {
                     valid_moves.extend(get_spider_moves(self, curr_piece_node, game));
                 }
+                PieceType::Ladybug => {
+                    valid_moves.extend(get_ladybug_moves(self, curr_piece_node, game));
+                }
                 _ => {
                     return todo!();
                 }
@@ -115,7 +124,7 @@ impl Piece {
 
 pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
-    if queen.can_move(&game.grid) {
+    if queen.can_move(&game) {
         let queen_neighbor_edges = get_edge_types();
         for e in queen_neighbor_edges {
             if can_slide(queen.hex, e, game)
@@ -134,7 +143,7 @@ pub fn get_queen_moves(queen: &Piece, queen_node: NodeIndex, game: &Game) -> Vec
 pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
     // Confirm Ant is not pinned:
-    if ant.can_move(&game.grid) {
+    if ant.can_move(&game) {
         // BFS using a queue to determine all the hexes the ant can move to:
         let mut hexes_to_check: Vec<Hex> = ant.hex.get_neighbors();
         hexes_to_check.retain(|&n| {
@@ -169,7 +178,7 @@ pub fn get_ant_moves(ant: &Piece, ant_node: NodeIndex, game: &Game) -> Vec<Piece
 
 pub fn get_beetle_moves(beetle: &Piece, beetle_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
-    if beetle.can_move(&game.grid) {
+    if beetle.can_move(&game) {
         let beetle_neighbor_edges = get_edge_types();
         for e in beetle_neighbor_edges {
             if can_slide(beetle.hex, e, game)
@@ -206,7 +215,7 @@ pub fn get_grasshopper_moves(
     game: &Game,
 ) -> Vec<PieceMove> {
     let mut valid_moves: Vec<PieceMove> = Vec::new();
-    if grasshopper.can_move(&game.grid) {
+    if grasshopper.can_move(&game) {
         let jump_dirs = get_edge_types();
         for dir in jump_dirs {
             println!("On {:?}", dir);
@@ -236,7 +245,7 @@ pub fn get_grasshopper_moves(
 pub fn get_spider_moves(spider: &Piece, spider_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
     let spider_move_distance = 3;
     let mut valid_moves: Vec<PieceMove> = Vec::new();
-    if spider.can_move(&game.grid) {
+    if spider.can_move(&game) {
         // BFS using a queue to determine all the hexes the spider can move to:
         let mut hexes_to_check: Vec<Hex> = spider.hex.get_neighbors();
         let mut checked_hexes: Vec<Hex> = Vec::new();
@@ -275,6 +284,64 @@ pub fn get_spider_moves(spider: &Piece, spider_node: NodeIndex, game: &Game) -> 
                 // Add hex to checked hexes so we don't check it again
                 checked_hexes.push(h);
             }
+        }
+    }
+    return valid_moves;
+}
+
+pub fn get_ladybug_moves(ladybug: &Piece, ladybug_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
+    let lb_top_distance = 2;
+    let mut valid_moves: Vec<PieceMove> = Vec::new();
+    if ladybug.can_move(&game) {
+        // BFS using a queue to determine all the hexes the spider can move to:
+        let mut hexes_to_check: Vec<Hex> = ladybug.hex.get_neighbors();
+        let mut final_top_hexes: Vec<Hex> = Vec::new();
+        let mut top_distance: usize = 1;
+        hexes_to_check.retain(|&n| {
+            game.grid.node_weights().find(|p| p.hex == n).is_some() // Piece at n
+                && piece_is_connected(n, game, &ladybug.id)
+        });
+
+        // Across the top of the hive:
+        while !hexes_to_check.is_empty() {
+            // If game has piece at h, check distance and add to final_top_hexes + checked_hexes,
+            if let Some(h) = hexes_to_check.pop() {
+                if game.grid.node_weights().find(|&p| p.hex == h).is_some()
+                // Piece at h
+                // Haven't checked this
+                // hex yet
+                    && final_top_hexes.iter().find(|&prev_h| prev_h == &h).is_none()
+                {
+                    if top_distance == lb_top_distance {
+                        final_top_hexes.push(h);
+                    } else {
+                        // Check all neighbors for h as well.
+                        let mut h_neighbors = h.get_neighbors();
+                        h_neighbors.retain(|&n| {
+                            game.grid.node_weights().find(|p| p.hex == n).is_some()
+                            // n has a top
+                        });
+                        hexes_to_check.extend(h_neighbors);
+                        // Increase distance on top by 1
+                        top_distance += 1;
+                    }
+                }
+            }
+        }
+
+        println!("FINAL TOPS: {:?}", final_top_hexes);
+
+        // Finally, which steps down are available
+        while let Some(top_h) = final_top_hexes.pop() {
+            let mut h_neighbors = top_h.get_neighbors();
+            h_neighbors.retain(|&n| {
+                game.grid.node_weights().find(|p| p.hex == n).is_none() // no piece at n
+                && valid_moves.iter().find(|&m| m.hex == n).is_none()
+            });
+            valid_moves.extend(h_neighbors.iter().map(|&hn| PieceMove {
+                piece_node: ladybug_node,
+                hex: hn,
+            }));
         }
     }
     return valid_moves;
