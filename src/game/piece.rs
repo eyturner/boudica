@@ -113,6 +113,9 @@ impl Piece {
                 PieceType::Ladybug => {
                     valid_moves.extend(get_ladybug_moves(self, curr_piece_node, game));
                 }
+                PieceType::Pillbug => {
+                    valid_moves.extend(get_pillbug_moves(self, curr_piece_node, game));
+                }
                 _ => {
                     return todo!();
                 }
@@ -329,8 +332,6 @@ pub fn get_ladybug_moves(ladybug: &Piece, ladybug_node: NodeIndex, game: &Game) 
             }
         }
 
-        println!("FINAL TOPS: {:?}", final_top_hexes);
-
         // Finally, which steps down are available
         while let Some(top_h) = final_top_hexes.pop() {
             let mut h_neighbors = top_h.get_neighbors();
@@ -344,6 +345,38 @@ pub fn get_ladybug_moves(ladybug: &Piece, ladybug_node: NodeIndex, game: &Game) 
             }));
         }
     }
+    return valid_moves;
+}
+
+pub fn get_pillbug_moves(pillbug: &Piece, pillbug_node: NodeIndex, game: &Game) -> Vec<PieceMove> {
+    // Start with queen-type moves
+    let mut valid_moves: Vec<PieceMove> = get_queen_moves(pillbug, pillbug_node, game);
+
+    // If space around pillbug, add all mobile pieces to nearby spaces:
+    let mut empty_neighbors = pillbug.hex.get_neighbors();
+    empty_neighbors.retain(|&n| game.grid.node_weights().find(|&p| p.hex == n).is_none());
+
+    let mut mobile_pieces_hexes = pillbug.hex.get_neighbors();
+    mobile_pieces_hexes.retain(|&n| {
+        game.grid
+            .node_weights()
+            .find(|&p| p.hex == n)
+            .is_some_and(|p| p.can_move(game))
+    });
+
+    while let Some(open_space) = empty_neighbors.pop() {
+        for mph in &mobile_pieces_hexes {
+            valid_moves.push(PieceMove {
+                piece_node: game
+                    .grid
+                    .node_indices()
+                    .find(|&p| game.grid[p].hex == *mph)
+                    .expect("Unable to unwrap piece_node"),
+                hex: open_space,
+            });
+        }
+    }
+
     return valid_moves;
 }
 
