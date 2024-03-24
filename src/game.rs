@@ -1,5 +1,6 @@
 use crate::game::hex::{Hex, HexEdge};
-use crate::game::piece::{Piece, PieceMove, PieceType};
+use crate::game::piece::{Piece, PieceType};
+use crate::game::piece_move::PieceMove;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 
@@ -8,6 +9,7 @@ use self::piece::PieceColor;
 
 pub mod hex;
 pub mod piece;
+pub mod piece_move;
 
 pub fn get_starting_hand(color: PieceColor) -> Vec<Piece> {
     return vec![

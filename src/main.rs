@@ -1,6 +1,6 @@
 use crate::game::{
     hex::Hex,
-    piece::{Piece, PieceColor, PieceMove, PieceType},
+    piece::{Piece, PieceColor, PieceType},
 };
 
 mod game;
@@ -19,7 +19,8 @@ fn main() {
 
     let first_piece = Piece::new(PieceColor::Black, PieceType::QueenBee, "q");
     let second_piece = Piece::new(PieceColor::White, PieceType::QueenBee, "q");
-    let third_piece = Piece::new(PieceColor::White, PieceType::Mosquito, "m");
+    let third_piece = Piece::new(PieceColor::White, PieceType::Grasshopper, "g1");
+    let cuarto_piece = Piece::new(PieceColor::Black, PieceType::Pillbug, "p");
 
     let fmi = game.add_to_grid(
         first_piece,
@@ -41,7 +42,7 @@ fn main() {
     );
 
     let tmi = game.add_to_grid(
-        third_piece.clone(),
+        third_piece,
         Hex {
             q: -1,
             r: 0,
@@ -50,13 +51,20 @@ fn main() {
         },
     );
 
-    let found_third_piece = game
-        .grid
-        .node_weight(tmi)
-        .expect("Unable to find third piece");
+    let cmi = game.add_to_grid(
+        cuarto_piece,
+        Hex {
+            q: -1,
+            r: -1,
+            s: 2,
+            z: 0,
+        },
+    );
 
-    for m in game.get_all_moves() {
-        println!("\n{:?}", m);
+    let legal_moves = game.get_all_moves();
+
+    for m in legal_moves {
+        println!("{:?}", m);
     }
 
     /*
